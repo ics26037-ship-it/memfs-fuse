@@ -563,21 +563,28 @@ static int memfs_create(const char *path, mode_t mode,
 }
 
 static int memfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi) {
-  struct filehandle *fh = (struct filehandle *) fi->fh;
+    int bytes_read = 0;
+    rwmutex_rdlock(&the_fs.fs_rwlock);
+    bytes_read = memfs_read_internal(path, buf, size, offset, fi);
 
-  // Check whether the file was opened for reading
-  if(!O_READ(fh->o_flags)) {
-    return -EACCES;
-  }
+    rwmutex_rdunlock(&the_fs.fs_rwlock);
+    if (bytes_read < 0) {
+        return bytes_read;
+    }
 
-  struct node *node = fh->node;
+    rwmutex_wrlock(&the_fs.fs_rwlock);
 
-  off_t filesize = node->vstat.st_size;
+    struct node *target_node = find_node(path); 
+    
+    if (target_node != NULL) {
+        update_atime(target_node); 
+    }
+  
+    rwmutex_wrunlock(&the_fs.fs_rwlock);
 
-  // Check whether offset is at or beyond the end of file
-  if(offset >= filesize) {
-    return 0;
-  }
+    return bytes_read;
+}
+ 
 
   // Calculate number of bytes to copy
   size_t avail = filesize - offset;
