@@ -5,7 +5,7 @@
 #define _LOCKS_H
 
 struct mutex {
-        
+   pthread_mutex_t lock;     
 };
 
 struct rwmutex {
