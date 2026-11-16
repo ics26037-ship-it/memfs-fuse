@@ -8,6 +8,9 @@ struct node {
   void         *data;
   unsigned int  fd_count;
   int           delete_on_close;
+
+  char name[MAX_NAME_LEN];
+  struct rwmutex node_lock; 
 };
 
 int getnoderelativeto(const char *path, struct node *root, struct node **node);
