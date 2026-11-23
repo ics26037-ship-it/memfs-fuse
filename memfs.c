@@ -563,12 +563,12 @@ static int memfs_read(const char *path, char *buf, size_t size, off_t offset, st
   }
 
   struct node *node = fh->node;
-  rwmutex_rdlock(&the_fs.fs_rwlock);
+  rwmutex_read_lock(&the_fs.fs_rwlock);
   off_t filesize = node->vstat.st_size;
 
   // Check whether offset is at or beyond the end of file
   if(offset >= filesize) {
-    rwmutex_rdunlock(&the_fs.fs_rwlock);
+    rwmutex_read_unlock(&the_fs.fs_rwlock);
     return 0;
   }
 
@@ -578,15 +578,15 @@ static int memfs_read(const char *path, char *buf, size_t size, off_t offset, st
 
   // Copy file contents
   memcpy(buf, node->data + offset, n);
-  rwmutex_rdunlock(&the_fs.fs_rwlock);
-  rwmutex_wrlock(&the_fs.fs_rwlock);
+  rwmutex_read_unlock(&the_fs.fs_rwlock);
+  rwmutex_write_lock(&the_fs.fs_rwlock);
   
   struct node *curr = find_node(path);
   
   if (curr != NULL && curr == node) {
    update_times(curr, U_ATIME);
   }  
-  rwmutex_wrunlock(&the_fs.fs_rwlock);
+  rwmutex_write_unlock(&the_fs.fs_rwlock);
   
   return n;
 }
