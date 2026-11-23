@@ -15,6 +15,12 @@ struct rwmutex {
   int readers;              
   int writers;              
   int waiting_writers;
+  pthread_mutex_t lock;
+  pthread_cond_t readers_cv;
+  pthread_cond_t writers_cv;
+  usnigned int readers;
+  unsigned int writers;
+  unsigned int writing;
 };
 
 // Simple lock interface.
