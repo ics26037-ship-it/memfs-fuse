@@ -9,7 +9,12 @@ struct mutex {
 };
 
 struct rwmutex {
-
+  pthread_mutex_t mutex;    
+  pthread_cond_t read_cv;    
+  pthread_cond_t write_cv;  
+  int readers;              
+  int writers;              
+  int waiting_writers;
 };
 
 // Simple lock interface.
