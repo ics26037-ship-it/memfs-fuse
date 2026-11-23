@@ -40,6 +40,16 @@ struct filesystem the_fs;
 // Utility functions
 //
 
+void *background_statistics_thread(void *arg) {
+    while (1) {
+        sleep(5); 
+        mutex_lock(&the_fs.fs_lock);
+        collect_statistics(the_fs.root);
+        mutex_unlock(&the_fs.fs_lock);
+    }
+    return NULL;
+}
+
 char * safe_dirname(const char *msg) {
   char *buf = strdup(msg);
   char *dir = dirname(buf);
@@ -678,6 +688,14 @@ int main(int argc, char *argv[]) {
   the_fs.root = root;
 
   umask(0);
+  pthread_t stat_thread;
+    
+    if (pthread_create(&stat_thread, NULL, background_statistics_thread, NULL) != 0) {
+        perror("Failed to create background thread");
+        exit(EXIT_FAILURE);
+    }
+    pthread_detach(stat_thread);
+
   return fuse_main(argc, argv, &memfs_oper, NULL);
 }
 
