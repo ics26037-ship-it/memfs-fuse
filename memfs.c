@@ -104,7 +104,7 @@ static int createentry(const char *path, mode_t mode, struct node **node) {
   if(!*node) {
     return -ENOMEM;
   }
-
+  rwmutex_init(&new_node->node_lock);
   (*node)->fd_count = 0;
   (*node)->delete_on_close = 0;
 
@@ -640,16 +640,20 @@ static int memfs_write(const char *path, const char *buf, size_t size, off_t off
 
 static int memfs_release(const char *path, struct fuse_file_info *fi) {
   struct filehandle *fh = (struct filehandle *) fi->fh;
+  struct node *node = fh->node
 
+  rwmutex_write_lock(&node->node_lock);
   // If the file was deleted but we could not free it due to open file descriptors,
   // free the node and its data after all file descriptors have been closed.
   if(--fh->node->fd_count == 0) {
     if(fh->node->delete_on_close) {
       if(fh->node->data) free(fh->node->data);
+      rwmutex_write_unlock(&node->node_lock);
+      rwmutex_destroy(&node->node_lock);
       free(fh->node);
     }
   }
-
+  rwmutex_write_unlock(&node->node_lock);
   // Free "file handle"
   free(fh);
 
