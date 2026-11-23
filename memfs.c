@@ -26,6 +26,8 @@
 
 struct filesystem {
   struct node *root;
+  struct node *root;
+  struct rwmutex dir_lock; 
 };
 
 struct filehandle {
@@ -684,6 +686,8 @@ int main(int argc, char *argv[]) {
   // Initialize root directory
   struct node *root = malloc(sizeof(struct node));
 
+  
+  rwmutex_init(&the_fs.dir_lock);
   memset(root, 0, sizeof(struct node));
   initstat(root, S_IFDIR | 0755);
   root->vstat.st_uid = getuid();
